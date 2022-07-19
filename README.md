@@ -10,7 +10,7 @@ export PATH="$HOME/.mpido/bin:$PATH"
 (Anywhere you want to put it.)
 
 # Usage
-Insert `mpido` to top of you command.
+Just insert `mpido` to top of your command.
 ```
 $ seq 1 10 | xargs -n 1 -I '{}' -P 6 mpido sh -c 'echo -n {}:; hostname'
 2:g0176.local
