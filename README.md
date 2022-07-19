@@ -12,8 +12,19 @@ export PATH="$HOME/.mpido/bin:$PATH"
 # Usage
 Insert `mpido` to top of you command.
 ```
-
+$ seq 1 10 | xargs -n 1 -I '{}' -P 6 mpido sh -c 'echo -n {}:; hostname'
+2:g0176.local
+1:g0176.local
+6:g0178.local
+3:g0176.local
+4:g0177.local
+8:g0176.local
+5:g0178.local
+7:g0176.local
+10:g0177.local
+9:g0178.local
 ```
+This example has allocated three hosts(g0176, g0177, and g0178).
 
 # Arguments
 You can specify folowing arguments to the first argument of `mpido`.
