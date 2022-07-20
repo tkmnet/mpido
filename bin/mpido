@@ -26,47 +26,64 @@ fi
 if [ -z "$MPIDO_POOL" ];then
 MPIDO_POOL="/tmp/mpido_pool.$(echo $HOSTLIST | md5sum | sed -e 's/ .*$//')"
 fi
+MPIDO_POOL_LOCK="${MPIDO_POOL}.lock"
 
 if [ "$1" = "-c" ];then
 rm "$MPIDO_POOL"
 echo -e "MPIDO_POOL($MPIDO_POOL) is removed"
+exit 0
 fi
 
 hosts(){
-cat "$HOSTLIST" | sed -e '/^$/d' | shuf
+cat "$HOSTLIST" | sed -e '/^$/d'
 }
-host_size=$(hosts | wc -l)
+HOST_SIZE=$(hosts | wc -l)
 
 job_num(){
 echo $(($(cat "$MPIDO_POOL" | grep "^+$1$" | wc -l) - $(cat "$MPIDO_POOL" | grep "^-$1$" | wc -l)))
 }
 
+release_lock(){
+rm -rf "$MPIDO_POOL_LOCK" 2>/dev/null
+}
+
+aquire_lock(){
+if [ $(($(date '+%s')0 - $(stat -c '%Z' \"$MPIDO_POOL_LOCK\" 2>/dev/null)0)) -gt 100 ];then
+release_lock
+sleep 0.$RANDOM
+fi
+while ! mkdir "$MPIDO_POOL_LOCK" 2>/dev/null;do
+sleep 0.00$RANDOM
+done
+}
+
 suggest_host(){
-sleep 0.$(($RANDOM % 100))
+aquire_lock
 if [ ! -e "$MPIDO_POOL" ];then
 touch "$MPIDO_POOL"
 fi
-candidates="$(hosts | head -n 1)"
+CANDIDATES="$(hosts | head -n 1)"
 ORGIFS=$IFS
 IFS=$'\n'
 for h in $(hosts | tail -n +2);do
-if [ $(job_num "$h") -lt $(job_num "$candidates") ];then
-candidates="$h"
+if [ $(job_num "$h") -lt $(job_num "$CANDIDATES") ];then
+CANDIDATES="$h"
 fi
 done
-echo "+$candidates" >> "$MPIDO_POOL"
+echo "+$CANDIDATES" >> "$MPIDO_POOL"
+release_lock
 IFS=$ORGIFS
-echo "$candidates"
+echo "$CANDIDATES"
 }
 
-if [ $host_size -le 1 ];then
+if [ $HOST_SIZE -le 1 ];then
 if [ 0 -eq $VERBOSE ];then echo -e "mpido> " $*; fi
 $@
 else
-suggested=$(suggest_host)
-if [ 0 -eq $VERBOSE ];then echo -e "mpido> " mpirun --host "$suggested" $*; fi
-mpirun --host "$suggested" "$@"
-echo "-$suggested" >> "$MPIDO_POOL"
+SUGGESTED=$(suggest_host)
+if [ 0 -eq $VERBOSE ];then echo -e "mpido> " mpirun --host "$SUGGESTED" $*; fi
+mpirun --host "$SUGGESTED" "$@"
+echo "-$SUGGESTED" >> "$MPIDO_POOL"
 fi
 
 
