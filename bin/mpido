@@ -1,4 +1,5 @@
 #!/bin/bash
+# https://github.com/tkmnet/mpido
 
 VERBOSE=1
 if [ "$1" = "-v" ];then
