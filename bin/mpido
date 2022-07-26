@@ -82,7 +82,7 @@ $@
 else
 SUGGESTED=$(suggest_host)
 if [ 0 -eq $VERBOSE ];then echo -e "mpido> " mpirun --host "$SUGGESTED" $*; fi
-mpirun --host "$SUGGESTED" "$@"
+mpirun --bind-to none --host "$SUGGESTED" "$@"
 echo "-$SUGGESTED" >> "$MPIDO_POOL"
 fi
 
